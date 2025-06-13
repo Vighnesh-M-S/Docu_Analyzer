@@ -1,31 +1,16 @@
+from llama_cpp import Llama
 import faiss
 import numpy as np
 import pickle
 from sentence_transformers import SentenceTransformer
-from llama_cpp import Llama
 
-# Load and chunk contract
-with open("contract.txt", "r") as f:
-    content = f.read()
-
-# Simple chunking (per clause or paragraph)
-chunks = [chunk.strip() for chunk in content.split("\n\n") if chunk.strip()]
+# Load the llm
+llm = Llama(model_path="Models/mistral-7b-instruct-v0.1.Q2_K.gguf", n_ctx=2048)
 
 # Load embedding model
 embed_model = SentenceTransformer('all-MiniLM-L6-v2')
 embeddings = embed_model.encode(chunks)
 
-# Build FAISS index
-index = faiss.IndexFlatL2(embeddings.shape[1])
-index.add(np.array(embeddings))
-
-# Save index and chunks
-faiss.write_index(index, "embedding_index.faiss")
-with open("document_chunks.pkl", "wb") as f:
-    pickle.dump(chunks, f)
-
-# Load the llm
-llm = Llama(model_path="Models/mistral-7b-instruct-v0.1.Q4_K_M.gguf", n_ctx=2048)
 
 # Load FAISS + Chunks
 index = faiss.read_index("embedding_index.faiss")
